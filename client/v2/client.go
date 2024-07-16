@@ -54,6 +54,9 @@ type HTTPConfig struct {
 	// DialContext specifies the dial function for creating unencrypted TCP connections.
 	// If DialContext is nil then the transport dials using package net.
 	DialContext func(ctx context.Context, network, addr string) (net.Conn, error)
+
+	// MoreHeaders adds additional http headers in the http request to influxdb endpoint.
+	MoreHeaders map[string]string
 }
 
 // BatchPointsConfig is the config data needed to create an instance of the BatchPoints struct.
@@ -130,8 +133,11 @@ func NewHTTPClient(conf HTTPConfig) (Client, error) {
 		password:  conf.Password,
 		useragent: conf.UserAgent,
 		httpClient: &http.Client{
-			Timeout:   conf.Timeout,
-			Transport: tr,
+			Timeout: conf.Timeout,
+			Transport: &wrapTransport{
+				headers:      conf.MoreHeaders,
+				RoundTripper: tr,
+			},
 		},
 		transport: tr,
 	}, nil
