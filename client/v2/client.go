@@ -166,6 +166,9 @@ func (c *client) Ping(timeout time.Duration) (time.Duration, string, error) {
 		params := req.URL.Query()
 		params.Set("wait_for_leader", fmt.Sprintf("%.0fs", timeout.Seconds()))
 		req.URL.RawQuery = params.Encode()
+		timeoutCtx, cancel := context.WithTimeout(req.Context(), timeout)
+		defer cancel()
+		req = req.WithContext(timeoutCtx)
 	}
 
 	resp, err := c.httpClient.Do(req)
